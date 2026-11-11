@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f5f2">
+  <title>DROP Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Zen+Kaku+Gothic+New:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-row">
+      <a class="brand" href="./" aria-label="DROP Viewer">DROP<span>.</span><small>VIEWER</small></a>
+      <nav class="tabs" role="tablist" aria-label="表示切り替え">
+        <button class="tab" id="tab-gallery" role="tab" type="button" data-view="gallery" aria-controls="view-gallery" aria-selected="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>ギャラリー
+        </button>
+        <button class="tab" id="tab-map" role="tab" type="button" data-view="map" aria-controls="view-map" aria-selected="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 4-5 2v13l5-2 6 2 5-2V4l-5 2-6-2Zm0 0v13m6-11v13"/></svg>マップ
+        </button>
+      </nav>
+    </div>
+    <div class="filters">
+      <label class="field field-tenant">
+        <span>テナント</span>
+        <select id="tenant"></select>
+      </label>
+      <label class="field field-search">
+        <span>フレーズで絞り込み</span>
+        <span class="search-box">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>
+          <input id="query" type="search" placeholder="例: 桜　夕焼け（スペース区切りでAND検索）" autocomplete="off" enterkeyhint="search">
+        </span>
+      </label>
+      <label class="field field-sort">
+        <span>並び順</span>
+        <select id="sort">
+          <option value="new">新しい順</option>
+          <option value="old">古い順</option>
+        </select>
+      </label>
+      <p class="result-count" id="result-count" role="status" aria-live="polite">読み込み中…</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="view" id="view-gallery" role="tabpanel" aria-labelledby="tab-gallery">
+      <div class="grid" id="grid"></div>
+      <p class="empty" id="empty" hidden>条件に一致する投稿はありません</p>
+      <div id="sentinel" aria-hidden="true"></div>
+    </section>
+
+    <section class="view view-map" id="view-map" role="tabpanel" aria-labelledby="tab-map" hidden>
+      <div id="map" role="application" aria-label="投稿地点マップ"></div>
+      <p class="map-note" id="map-note"></p>
+    </section>
+  </main>
+
+  <dialog class="modal" id="modal" aria-labelledby="modal-account">
+    <div class="modal-shell">
+      <button class="modal-close" id="modal-close" type="button" aria-label="閉じる">&times;</button>
+      <div class="modal-media">
+        <img id="modal-image" alt="">
+        <span class="image-fallback" id="modal-fallback" hidden>画像を読み込めませんでした</span>
+        <button class="modal-nav modal-prev" id="modal-prev" type="button" aria-label="前の投稿">&#8249;</button>
+        <button class="modal-nav modal-next" id="modal-next" type="button" aria-label="次の投稿">&#8250;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-phrases" id="modal-phrases"></div>
+        <dl class="modal-meta">
+          <div><dt>投稿者</dt><dd id="modal-account"></dd></div>
+          <div><dt>投稿日時</dt><dd><time id="modal-time"></time></dd></div>
+          <div><dt>テナント</dt><dd id="modal-tenants"></dd></div>
+        </dl>
+        <div class="modal-actions">
+          <button class="btn" id="modal-to-map" type="button">地図で見る</button>
+          <a class="btn btn-ghost" id="modal-original" target="_blank" rel="noopener">元画像を開く</a>
+          <span class="modal-position" id="modal-position"></span>
+        </div>
+      </div>
+    </div>
+  </dialog>
+</body>
+</html>
