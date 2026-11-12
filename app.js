@@ -234,9 +234,13 @@
       img.addEventListener("error", () => img.remove());
       box.append(img);
     }
-    const title = document.createElement("b");
-    title.textContent = drop.phrases[0] || "（フレーズなし）";
-    box.append(title, drop.account || "");
+    const text = document.createElement("div");
+    text.className = "pin-tip-text";
+    const account = document.createElement("span");
+    account.className = "pin-tip-account";
+    account.textContent = drop.account || "";
+    text.append(phraseBlock(drop, "phrases"), account);
+    box.append(text);
     return box;
   }
   // 外れ値（遠方の1〜2件）で全国表示にならないよう、緯度経度の2〜98%範囲に合わせる

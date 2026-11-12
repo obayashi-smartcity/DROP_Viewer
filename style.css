@@ -47,15 +47,16 @@ button, input, select { font: inherit; color: inherit; }
 /* ---- gallery ---- */
 main { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 .view { padding: 20px; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 18px 14px; align-items: start; }
+/* フレーズは最大22文字×5行。全角22文字(=22em)が1行に収まる幅を各表示で確保する */
+.grid { --ph: 12.5px; --card-pad: 13px; display: grid; grid-template-columns: repeat(auto-fill, minmax(calc(var(--ph) * 22 + var(--card-pad) * 2 + 4px), 1fr)); gap: 18px 14px; align-items: start; }
 .card { display: flex; flex-direction: column; padding: 0; text-align: left; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); overflow: hidden; cursor: pointer; transition: transform .15s, box-shadow .15s; }
 .card:hover, .card:focus-visible { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(25, 38, 33, .12); outline: 0; border-color: var(--green); }
 /* 画像は縦16:横9。中心基準で長辺側を切り取り、余白なし（加工画像は持たずCSSで制御） */
 .card-media { position: relative; display: block; aspect-ratio: 9 / 16; background: var(--green-pale); overflow: hidden; }
 .card-media img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; display: block; transition: transform .25s; }
 .card:hover .card-media img { transform: scale(1.03); }
-.card-body { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 11px 12px 10px; }
-.phrases { font-family: var(--font-jp); font-size: 12.5px; font-weight: 500; line-height: 1.6; }
+.card-body { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; padding: 11px var(--card-pad) 10px; }
+.phrases { font-family: var(--font-jp); font-size: var(--ph); font-weight: 500; line-height: 1.6; letter-spacing: 0; }
 .phrases span { display: block; overflow-wrap: anywhere; }
 .phrases .no-phrase { color: var(--muted); font-weight: 400; }
 mark { background: #ffe59a; color: inherit; border-radius: 2px; padding: 0 1px; }
@@ -70,16 +71,18 @@ mark { background: #ffe59a; color: inherit; border-radius: 2px; padding: 0 1px; 
 .view-map { flex: 1; display: flex; flex-direction: column; padding: 0; position: relative; }
 #map { flex: 1; min-height: 420px; height: calc(100vh - 130px); background: #e8ebe6; }
 .map-note { position: absolute; left: 12px; bottom: 22px; z-index: 500; margin: 0; padding: 6px 12px; border-radius: 999px; background: rgba(255, 255, 255, .94); border: 1px solid var(--line); font-size: 12px; color: var(--muted); }
-.pin-tip { font-family: var(--font-jp); font-size: 12px; line-height: 1.5; max-width: 220px; white-space: normal; }
-.pin-tip img { display: block; width: 90px; aspect-ratio: 9 / 16; height: auto; object-fit: cover; object-position: 50% 50%; border-radius: 6px; margin-bottom: 6px; background: var(--green-pale); }
-.pin-tip b { display: block; font-weight: 700; }
+.pin-tip { display: flex; gap: 10px; align-items: flex-start; font-family: var(--font-jp); font-size: 11.5px; line-height: 1.55; white-space: normal; }
+.pin-tip img { flex: none; display: block; width: 72px; aspect-ratio: 9 / 16; height: auto; object-fit: cover; object-position: 50% 50%; border-radius: 6px; background: var(--green-pale); }
+.pin-tip-text { width: calc(22em + 2px); display: flex; flex-direction: column; gap: 6px; }
+.pin-tip-text .phrases { --ph: 11.5px; }
+.pin-tip-account { color: var(--muted); font-size: 10.5px; }
 
 /* ---- modal ---- */
 .modal { width: fit-content; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: 16px; background: var(--surface); color: var(--ink); overflow: hidden; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); }
 .modal::backdrop { background: rgba(15, 22, 19, .72); }
 /* 画像枠の高さを決め、幅は 9:16 から自動算出。本文カラムは固定幅で横に並べる */
-.modal-shell { display: flex; max-height: calc(100dvh - 24px); }
-.modal-media { position: relative; flex: none; height: min(calc(100dvh - 24px), 780px); aspect-ratio: 9 / 16; background: #101613; overflow: hidden; }
+.modal-shell { --mph: 20px; --body-pad: 28px; --body-w: calc(var(--mph) * 22 + var(--body-pad) * 2 + 4px); display: flex; max-height: calc(100dvh - 24px); }
+.modal-media { position: relative; flex: none; height: min(calc(100dvh - 24px), 780px, calc((100vw - 24px - var(--body-w)) * 16 / 9)); aspect-ratio: 9 / 16; background: #101613; overflow: hidden; }
 .modal-media img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 50%; }
 .modal-media .image-fallback { color: #c9d2cc; }
 .modal-close { position: absolute; top: 10px; right: 10px; z-index: 3; width: 38px; height: 38px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .92); font-size: 24px; line-height: 1; cursor: pointer; box-shadow: 0 1px 4px rgba(0, 0, 0, .25); }
@@ -88,8 +91,8 @@ mark { background: #ffe59a; color: inherit; border-radius: 2px; padding: 0 1px; 
 .modal-nav:disabled { opacity: .25; cursor: default; }
 .modal-prev { left: 0; border-radius: 0 8px 8px 0; }
 .modal-next { right: 0; border-radius: 8px 0 0 8px; }
-.modal-body { flex: 0 1 380px; width: 380px; min-width: 0; display: flex; flex-direction: column; gap: 20px; padding: 56px 26px 24px; overflow-y: auto; }
-.modal-phrases { font-family: var(--font-jp); font-size: 20px; font-weight: 700; line-height: 1.8; }
+.modal-body { flex: none; width: var(--body-w); display: flex; flex-direction: column; gap: 20px; padding: 56px var(--body-pad) 24px; overflow-y: auto; }
+.modal-phrases { font-family: var(--font-jp); font-size: var(--mph); font-weight: 700; line-height: 1.8; letter-spacing: 0; }
 .modal-phrases span { display: block; overflow-wrap: anywhere; }
 .modal-phrases .no-phrase { font-size: 14px; font-weight: 400; color: var(--muted); }
 .modal-meta { margin: 0; display: grid; gap: 8px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; }
@@ -102,6 +105,15 @@ mark { background: #ffe59a; color: inherit; border-radius: 2px; padding: 0 1px; 
 .btn-ghost { background: transparent; color: var(--green); }
 .modal-position { margin-left: auto; font-size: 11px; color: var(--muted); }
 
+/* 2列で22文字幅を確保できない幅では、画像左・フレーズ右の横並びカード1列に切り替え */
+@media (max-width: 700px) {
+  .grid { --thumb-w: 92px; --card-pad: 11px; --ph: min(12.5px, calc((100vw - 24px - var(--thumb-w) - var(--card-pad) * 2 - 6px) / 22)); grid-template-columns: 1fr; gap: 10px; }
+  .card { flex-direction: row; align-items: stretch; }
+  .card-media { flex: none; width: var(--thumb-w); align-self: flex-start; }
+  .card-body { padding: 9px var(--card-pad) 8px; }
+  .card:hover { transform: none; }
+}
+
 @media (max-width: 760px) {
   .topbar { padding: 8px 12px 10px; }
   .tab { padding: 6px 11px; }
@@ -110,14 +122,11 @@ mark { background: #ffe59a; color: inherit; border-radius: 2px; padding: 0 1px; 
   .result-count { padding-top: 0; flex: 1 1 100%; margin: 0; }
   .view { padding: 12px; }
   .view-map { padding: 0; }
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; }
-  .card-body { padding: 10px; }
-  .phrases { font-size: 12px; }
   #map { height: calc(100dvh - 210px); min-height: 320px; }
   /* スマホは画像を全幅9:16で表示し、本文は下にスクロール */
-  .modal { width: calc(100vw - 24px); }
+  .modal { width: min(calc(100vw - 24px), 480px); }
   .modal-shell { flex-direction: column; overflow-y: auto; overscroll-behavior: contain; }
   .modal-media { width: 100%; height: auto; }
-  .modal-body { flex: none; width: auto; padding: 18px 16px 20px; overflow: visible; }
-  .modal-phrases { font-size: 17px; }
+  .modal-shell { --body-pad: 16px; --mph: min(18px, calc((100vw - 24px - 32px - 4px) / 22)); }
+  .modal-body { width: auto; padding: 18px var(--body-pad) 20px; overflow: visible; }
 }
