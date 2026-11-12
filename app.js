@@ -66,7 +66,8 @@
     el.count.append(strong, `件 / ${numberFormat.format(drops.length)}件`);
     renderGallery();
     mapState.dirty = true;
-    if (state.view === "map") renderMap();
+    // 地図タブが表示されている時だけ描画（非表示のまま描画すると地図サイズ0で位置合わせが狂う）
+    if (state.view === "map" && !el.views.map.hidden) renderMap();
   }
 
   // 検索語に一致した部分を <mark> で強調（正規化で文字数が変わらない前提で位置を対応させる）
@@ -243,16 +244,36 @@
     box.append(text);
     return box;
   }
-  // 外れ値（遠方の1〜2件）で全国表示にならないよう、緯度経度の2〜98%範囲に合わせる
-  function robustBounds(points) {
-    const pick = (values) => {
+  const median = (values) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = sorted.length >> 1;
+    return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  };
+  // 初期表示の基準テナント: 選択中のテナント、「すべて」なら表示中の投稿が最も多いテナント
+  function focusTenant(points) {
+    if (state.tenant) return state.tenant;
+    const counts = new Map();
+    points.forEach((d) => d.tenants.forEach((t) => counts.set(t, (counts.get(t) || 0) + 1)));
+    let best = "", max = 0;
+    counts.forEach((c, t) => { if (c > max) { best = t; max = c; } });
+    return best;
+  }
+  // 基準テナント内の投稿の中心（中央値）に合わせ、ズームは外れ値を除いた範囲（5〜95%）が収まる倍率にする
+  function focusMap(points) {
+    const tenant = focusTenant(points);
+    const target = points.filter((d) => d.tenants.includes(tenant));
+    if (!target.length) return;
+    const lats = target.map((d) => d.lat), lngs = target.map((d) => d.lng);
+    const center = [median(lats), median(lngs)];
+    const range = (values) => {
       const sorted = [...values].sort((a, b) => a - b);
-      const cut = points.length >= 50 ? Math.floor(sorted.length * 0.02) : 0;
+      const cut = sorted.length >= 20 ? Math.floor(sorted.length * 0.05) : 0;
       return [sorted[cut], sorted[sorted.length - 1 - cut]];
     };
-    const [south, north] = pick(points.map((p) => p.lat));
-    const [west, east] = pick(points.map((p) => p.lng));
-    return [[south, west], [north, east]];
+    const [south, north] = range(lats), [west, east] = range(lngs);
+    const bounds = L.latLngBounds([[south, west], [north, east]]).extend(center);
+    const zoom = Math.min(mapState.map.getBoundsZoom(bounds, false, L.point(60, 60)), 17);
+    mapState.map.setView(center, zoom, { animate: false });
   }
   function renderMap() {
     initMap();
@@ -271,7 +292,7 @@
           .addTo(mapState.layer);
         points.push(drop);
       });
-      if (points.length && !mapState.pending) mapState.map.fitBounds(robustBounds(points), { padding: [30, 30], maxZoom: 17 });
+      if (points.length && !mapState.pending) focusMap(points);
       el.mapNote.textContent = points.length
         ? `${numberFormat.format(points.length)}件の投稿地点（ピンをクリックで詳細）`
         : "条件に一致する位置情報付きの投稿はありません";
@@ -280,7 +301,10 @@
       const drop = mapState.pending;
       mapState.pending = null;
       mapState.map.setView([drop.lat, drop.lng], Math.max(mapState.map.getZoom(), 17));
-      const ring = L.circleMarker([drop.lat, drop.lng], { radius: 16, color: "#167457", weight: 3, fill: false, interactive: false }).addTo(mapState.map);
+      // ピンと同じキャンバスに描く（別キャンバスを重ねるとピンのクリックを遮ってしまうため）
+      const ring = L.circleMarker([drop.lat, drop.lng], {
+        renderer: mapState.renderer, radius: 16, color: "#167457", weight: 3, fill: false, interactive: false,
+      }).addTo(mapState.map);
       setTimeout(() => ring.remove(), 4000);
     }
   }
